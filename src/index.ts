@@ -13,9 +13,9 @@ async function main() {
     // Simple arg parsing
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
-        if (arg === '--summary') {
+        if (arg === '--summary' || arg === '-s') {
             showSummary = true;
-        } else if (arg === '--maxLeaf' || arg.startsWith('--maxLeaf=')) {
+        } else if (arg === '--maxLeaf' || arg.startsWith('--maxLeaf=') || arg === '-m' || arg.startsWith('-m=')) {
             const val = arg.includes('=') ? arg.split('=')[1] : args[++i];
             if (val) {
                 maxLeaf = parseInt(val, 10);

@@ -31,19 +31,19 @@ node dist/index.js [target-directory] [options]
 ```
 
 **Options:**
-- `--summary`: Show a summary at the end (Total files, folders, skipped items).
-- `--maxLeaf=N`: Collapse folders containing more than `N` files.
+- `--summary`, `-s`: Show a summary at the end (Total files, folders, skipped items).
+- `--maxLeaf=N`, `-m N`: Collapse folders containing more than `N` files.
 
 ### Examples
 
 **Show current directory with summary:**
 ```bash
-node dist/index.js . --summary
+node dist/index.js . -s
 ```
 
 **Show a specific folder, limiting large directories:**
 ```bash
-node dist/index.js ./src --maxLeaf=5
+node dist/index.js ./src -m 5
 ```
 
 ## Manual Testing Guide
