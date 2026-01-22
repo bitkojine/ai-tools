@@ -13,7 +13,7 @@ export interface TreeSummary {
 export function getSummary(node: TreeNode): TreeSummary {
     const summary: TreeSummary = {
         totalFiles: 0,
-        totalFolders: 0, // Excluding root? Usually excluding root in counts or including? Let's include if it's counting "folders".
+        totalFolders: 0,
         skippedGitignore: 0,
         skippedSize: 0
     };
@@ -32,23 +32,22 @@ export function getSummary(node: TreeNode): TreeSummary {
         }
     }
 
-    // Traverse starting from root. 
-    // If root is folder, it counts as 1. 
     traverse(node);
-
-    // Usually root is not counted in "directories inside". But "Total folders" might include root.
-    // Let's stick to simple traversal count.
     return summary;
+}
+
+interface IgnoreStackItem {
+    ignorer: any;
+    basePath: string;
 }
 
 export async function buildTree(
     currentPath: string,
     options: TreeOptions = {},
-    parentIg?: any
+    ignoreStack: IgnoreStackItem[] = []
 ): Promise<TreeNode> {
     const name = path.basename(currentPath);
 
-    // Use lstat to detect symlinks
     let stats;
     try {
         stats = await fs.lstat(currentPath);
@@ -70,18 +69,24 @@ export async function buildTree(
     }
 
     // Handle .gitignore for current directory
-    let ig = parentIg ? ignore().add(parentIg) : ignore();
-    ig.add('.git');
+    const currentIg = ignore();
 
-    if (options.ignorePatterns) {
-        ig.add(options.ignorePatterns);
+    // If root (empty stack), allow adding global options
+    if (ignoreStack.length === 0) {
+        currentIg.add('.git');
+        if (options.ignorePatterns) {
+            currentIg.add(options.ignorePatterns);
+        }
     }
 
     try {
         const gitignorePath = path.join(currentPath, '.gitignore');
         const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');
-        ig.add(gitignoreContent);
+        currentIg.add(gitignoreContent);
     } catch (e) { }
+
+    // Start with existing stack, append current ignore instance
+    const newStack = [...ignoreStack, { ignorer: currentIg, basePath: currentPath }];
 
     let childrenItems: string[];
     try {
@@ -101,13 +106,26 @@ export async function buildTree(
         let s;
         try { s = await fs.lstat(itemPath); } catch { continue; }
 
-        if (s.isSymbolicLink()) continue; // Skip symlinks
+        if (s.isSymbolicLink()) continue;
 
-        const isIgnored = ig.ignores(item);
+        // Check if ignored by ANY ignorer in the stack
+        let isIgnored = false;
+        for (const { ignorer, basePath } of newStack) {
+            // Get path relative to the ignore file location
+            const relPath = path.relative(basePath, itemPath);
+            if (ignorer.ignores(relPath)) {
+                isIgnored = true;
+                break;
+            }
+            if (s.isDirectory() && ignorer.ignores(relPath + '/')) {
+                isIgnored = true;
+                break;
+            }
+        }
+
         candidates.push({ name: item, path: itemPath, isIgnored, stats: s });
     }
 
-    // Count visible (non-ignored) items
     const visibleCount = candidates.filter(c => !c.isIgnored).length;
 
     if (options.maxLeaf && visibleCount > options.maxLeaf) {
@@ -134,7 +152,7 @@ export async function buildTree(
         }
 
         if (cand.stats.isDirectory()) {
-            children.push(await buildTree(cand.path, options, ig));
+            children.push(await buildTree(cand.path, options, newStack));
         } else {
             children.push({
                 name: cand.name,

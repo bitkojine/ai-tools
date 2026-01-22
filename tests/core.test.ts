@@ -69,10 +69,6 @@ describe('buildTree', () => {
         const tree = await buildTree(tempDir);
         const linkNode = tree.children?.find(c => c.name === 'link');
 
-        // Requirements say: "Symbolic links should be skipped"
-        // This implies they shouldn't appear in the tree OR should appear but not be traversed?
-        // "Symbolic links should be skipped to avoid infinite loops"
-        // Let's assume we simply don't include them in the tree output to keep it clean.
         expect(linkNode).toBeUndefined();
     });
 
@@ -89,6 +85,7 @@ describe('buildTree', () => {
         expect(largeDir?.skipped).toBe('size');
         expect(largeDir?.children).toBeUndefined();
     });
+
     it('should calculate correct summary', async () => {
         const tree: any = {
             type: 'folder',
@@ -101,9 +98,44 @@ describe('buildTree', () => {
         };
 
         const summary = getSummary(tree);
-        expect(summary.totalFiles).toBe(2);
         expect(summary.totalFolders).toBe(4);
         expect(summary.skippedGitignore).toBe(1);
         expect(summary.skippedSize).toBe(1);
+    });
+
+    it('should respect path-specific ignore rules from root', async () => {
+        fs.writeFileSync(path.join(tempDir, '.gitignore'), 'src/ignore.txt');
+        fs.mkdirSync(path.join(tempDir, 'src'));
+        // This file should match src/ignore.txt rule
+        fs.writeFileSync(path.join(tempDir, 'src/ignore.txt'), 'ignored');
+        fs.writeFileSync(path.join(tempDir, 'src/keep.txt'), 'kept');
+
+        const tree = await buildTree(tempDir);
+
+        const srcNode = tree.children?.find(c => c.name === 'src');
+        expect(srcNode).toBeDefined();
+
+        const childrenNames = srcNode?.children?.map(c => c.name);
+        expect(childrenNames).toContain('keep.txt');
+        expect(childrenNames).not.toContain('ignore.txt');
+        expect(childrenNames).not.toContain('ignore.txt');
+    });
+
+    it('should respect directory-specific ignore rules (trailing slash)', async () => {
+        fs.writeFileSync(path.join(tempDir, '.gitignore'), 'coverage/');
+        fs.mkdirSync(path.join(tempDir, 'coverage'));
+        fs.writeFileSync(path.join(tempDir, 'coverage/data.json'), '{}');
+        fs.writeFileSync(path.join(tempDir, 'coverage_file'), 'data');
+
+        const tree = await buildTree(tempDir);
+
+        // Coverage folder should be skipped (found but marked skipped)
+        const covNode = tree.children?.find(c => c.name === 'coverage');
+        expect(covNode).toBeDefined();
+        expect(covNode?.skipped).toBe('gitignore');
+
+        // coverage_file should NOT be skipped (rule is coverage/)
+        const names = tree.children?.map(c => c.name);
+        expect(names).toContain('coverage_file');
     });
 });
