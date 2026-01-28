@@ -1,4 +1,4 @@
-import { TreeNode, TreeOptions } from './types';
+import { TreeNode, TreeOptions } from './tree-types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import ignore from 'ignore';

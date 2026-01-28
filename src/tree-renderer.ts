@@ -1,4 +1,4 @@
-import { TreeNode } from './types';
+import { TreeNode } from './tree-types';
 import chalk from 'chalk';
 
 export function renderTree(tree: TreeNode): string {

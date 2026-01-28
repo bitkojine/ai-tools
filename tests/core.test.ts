@@ -1,4 +1,5 @@
-import { buildTree, getSummary } from '../src/core';
+import { buildTree, getSummary } from '../src/tree-builder';
+import { TreeNode } from '../src/tree-types';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -25,11 +26,11 @@ describe('buildTree', () => {
         expect(tree.children).toBeDefined();
 
         // Check direct children
-        const childrenNames = tree.children?.map(c => c.name).sort();
+        const childrenNames = tree.children?.map((c: TreeNode) => c.name).sort();
         expect(childrenNames).toEqual(['README.md', 'src']);
 
         // Check nested child
-        const srcNode = tree.children?.find(c => c.name === 'src');
+        const srcNode = tree.children?.find((c: TreeNode) => c.name === 'src');
         expect(srcNode).toBeDefined();
         expect(srcNode?.type).toBe('folder');
         expect(srcNode?.children).toHaveLength(1);
@@ -47,12 +48,12 @@ describe('buildTree', () => {
 
         const tree = await buildTree(tempDir);
 
-        const childrenNames = tree.children?.map(c => c.name);
+        const childrenNames = tree.children?.map((c: TreeNode) => c.name);
         expect(childrenNames).toContain('included.txt');
         expect(childrenNames).not.toContain('ignored.txt');
 
         // node_modules should be present but marked as skipped
-        const nodeModules = tree.children?.find(c => c.name === 'node_modules');
+        const nodeModules = tree.children?.find((c: TreeNode) => c.name === 'node_modules');
         expect(nodeModules).toBeDefined();
         expect(nodeModules?.skipped).toBe('gitignore');
         expect(nodeModules?.children).toBeUndefined(); // Shortcuts recursion
@@ -67,7 +68,7 @@ describe('buildTree', () => {
         fs.symlinkSync(targetDir, linkPath);
 
         const tree = await buildTree(tempDir);
-        const linkNode = tree.children?.find(c => c.name === 'link');
+        const linkNode = tree.children?.find((c: TreeNode) => c.name === 'link');
 
         expect(linkNode).toBeUndefined();
     });
@@ -79,7 +80,7 @@ describe('buildTree', () => {
         }
 
         const tree = await buildTree(tempDir, { maxLeaf: 3 });
-        const largeDir = tree.children?.find(c => c.name === 'large-dir');
+        const largeDir = tree.children?.find((c: TreeNode) => c.name === 'large-dir');
 
         expect(largeDir).toBeDefined();
         expect(largeDir?.skipped).toBe('size');
@@ -112,10 +113,10 @@ describe('buildTree', () => {
 
         const tree = await buildTree(tempDir);
 
-        const srcNode = tree.children?.find(c => c.name === 'src');
+        const srcNode = tree.children?.find((c: TreeNode) => c.name === 'src');
         expect(srcNode).toBeDefined();
 
-        const childrenNames = srcNode?.children?.map(c => c.name);
+        const childrenNames = srcNode?.children?.map((c: TreeNode) => c.name);
         expect(childrenNames).toContain('keep.txt');
         expect(childrenNames).not.toContain('ignore.txt');
         expect(childrenNames).not.toContain('ignore.txt');
@@ -130,12 +131,12 @@ describe('buildTree', () => {
         const tree = await buildTree(tempDir);
 
         // Coverage folder should be skipped (found but marked skipped)
-        const covNode = tree.children?.find(c => c.name === 'coverage');
+        const covNode = tree.children?.find((c: TreeNode) => c.name === 'coverage');
         expect(covNode).toBeDefined();
         expect(covNode?.skipped).toBe('gitignore');
 
         // coverage_file should NOT be skipped (rule is coverage/)
-        const names = tree.children?.map(c => c.name);
+        const names = tree.children?.map((c: TreeNode) => c.name);
         expect(names).toContain('coverage_file');
     });
 });
