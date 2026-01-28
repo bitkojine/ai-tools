@@ -1,5 +1,5 @@
-import { renderTree } from '../src/render';
-import { TreeNode } from '../src/types';
+import { renderTree } from '../src/tree-renderer';
+import { TreeNode } from '../src/tree-types';
 
 const stripAnsi = (str: string) => str.replace(/\u001b\[\d+m/g, '');
 
