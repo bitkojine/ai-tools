@@ -1,14 +1,13 @@
-# tree-cli
+# AI Tools
 
-A flexible CLI tool to display directory structures in a tree format, built with TypeScript and TDD.
+A collection of AI-powered tools for GitHub repository management and analysis.
 
 ## Features
 
-- 🌳 **Recursive Tree View**: Visualizes your folder structure.
-- 🙈 **Gitignore Support**: Automatically respects `.gitignore` rules (hides ignored files, marks ignored folders).
-- 📏 **Max Leaf Control**: Skips displaying folder contents if the file count exceeds a threshold (`--maxLeaf`).
-- 🔗 **Symlink Handling**: Safely skips symbolic links to prevent infinite loops.
-- 📊 **Summary Statistics**: Optional summary of folders, files, and skipped items.
+- 🤖 **GitHub App Integration**: Secure authentication using GitHub Apps
+- 🌳 **Directory Tree Visualization**: Display directory structures in tree format
+- � **Multi-Repository Analysis**: Analyze multiple repositories simultaneously
+- 🏷️ **Issue Creation**: Create GitHub issues programmatically
 
 ## Installation & Build
 
@@ -22,84 +21,65 @@ A flexible CLI tool to display directory structures in a tree format, built with
    npm run build
    ```
 
-## Usage
+## Available Tools
 
-Run the tool using `node`:
+### Directory Tree Tool
+
+Visualize folder structures with gitignore support:
 
 ```bash
 node dist/index.js [target-directory] [options]
 ```
 
 **Options:**
-- `--summary`, `-s`: Show a summary at the end (Total files, folders, skipped items).
-- `--maxLeaf=N`, `-m N`: Collapse folders containing more than `N` files.
+- `--summary`, `-s`: Show a summary at the end
+- `--maxLeaf=N`, `-m N`: Collapse folders containing more than N files
 
-### Examples
+### GitHub App Issue Creator
 
-**Show current directory with summary:**
-```bash
-node dist/index.js . -s
-```
-
-**Show a specific folder, limiting large directories:**
-```bash
-node dist/index.js ./src -m 5
-```
-
-## Manual Testing Guide
-
-Follow these steps to verify all features manually.
-
-### 1. Verification Setup
-Create a playground directory with various edge cases:
+Create issues using GitHub App authentication:
 
 ```bash
-# Create directories
-mkdir -p verify_test/src verify_test/large verify_test/ignored_folder
-
-# Create files
-echo "console.log('hello')" > verify_test/src/index.ts
-echo "export const x = 1" > verify_test/src/utils.ts
-echo "secret" > verify_test/ignored_folder/secret.txt
-echo "ignored_folder" > verify_test/.gitignore
-
-# Create a "large" folder (5 files)
-for i in {1..5}; do echo "content" > verify_test/large/file$i.txt; done
-
-# Create a symbolic link
-ln -s ../verify_test/src verify_test/src_link
+node dist/issue-creator-device.js create "owner/repo" "Issue Title" "Issue description"
 ```
 
-### 2. Test Cases
+### GitHub App JWT Issue Creator
 
-**Test A: Standard Tree & Gitignore**
-Run:
+Create issues using JWT-based GitHub App authentication:
+
 ```bash
-node dist/index.js verify_test --summary
-```
-**Expectation:**
-- `ignored_folder` should be marked as `🚫 (ignored)`.
-- `src_link` should NOT be visible (symlinks skipped).
-- Summary should be displayed.
-
-**Test B: Max Leaf Threshold**
-Run:
-```bash
-node dist/index.js verify_test --maxLeaf=3 --summary
-```
-**Expectation:**
-- `large` folder should be marked `📚 (too many files)` because it has 5 files (> 3).
-- Its contents (`file1.txt`...) should NOT be listed.
-
-### 3. Cleanup
-```bash
-rm -rf verify_test
+node dist/issue-creator-jwt.js create "owner/repo" "Issue Title" "Issue description"
 ```
 
-## Running Automated Tests
+## Setup
 
-The project includes a comprehensive test suite using Jest.
+### GitHub App Configuration
+
+1. Create a GitHub App at https://github.com/settings/apps/new
+2. Configure the necessary permissions (Issues: Write)
+3. Download the private key
+4. Set the required environment variables:
+   ```bash
+   export GITHUB_APP_ID="your_app_id"
+   export GITHUB_PRIVATE_KEY_PATH="path/to/private/key.pem"
+   ```
+
+For detailed setup instructions, see [docs/github-app-guide.md](docs/github-app-guide.md).
+
+## Running Tests
 
 ```bash
 npm test
 ```
+
+## Project Structure
+
+- `src/tree-builder.ts` - Core tree building functionality
+- `src/tree-renderer.ts` - Tree rendering utilities
+- `src/issue-creator-device.ts` - GitHub App issue creation (Device Flow)
+- `src/issue-creator-jwt.ts` - JWT-based GitHub App authentication
+- `docs/` - Documentation for various tools
+
+## License
+
+ISC

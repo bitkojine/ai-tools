@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { buildTree, getSummary } from './core';
-import { renderTree } from './render';
+import { buildTree, getSummary } from './tree-builder';
+import { renderTree } from './tree-renderer';
 import * as path from 'path';
 import chalk from 'chalk';
 
